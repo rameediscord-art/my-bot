@@ -1,0 +1,227 @@
+Architected technical brief for Discord bot implementation
+Architected technical brief for Discord bot implementation
+Here's a brief you can paste directly to your Replit agent:
+
+Project: Discord Temporary Access Bot via Lockr
+
+Goal: Members complete a task on a Lockr locked-link → get redirected to my site → log in with Discord → automatically receive a temporary role in my Discord server → role auto-expires after a set time.
+
+Stack: Node.js, Express, discord.js, SQLite (or Replit DB)
+
+Flow:
+
+Lockr link (task-locked) → destination set to my Replit app's /unlock route.
+/unlock page shows a "Login with Discord" button using Discord OAuth2 (scope: identify, guilds.join optional).
+On successful OAuth callback, the app:
+Gets the user's Discord ID from the OAuth response.
+Uses a Discord bot (bot token, Manage Roles permission) to add a specific role (e.g. @Unlocked) to that user in my server.
+Saves { discord_id, granted_at, expires_at } to the database (expiry = granted_at + X hours, configurable).
+A background job (runs every 1–5 min via setInterval or node-cron) checks the database for expired entries and removes the role from those users, then deletes/marks the DB row as expired.
+Prevent duplicate/abuse: if a user already has an active unlock, refreshing the task shouldn't stack unlimited time — just extend or ignore, my choice.
+Needs from me (I will provide):
+
+Discord bot token
+Discord OAuth2 Client ID + Client Secret (from Discord Developer Portal)
+Server (guild) ID
+Role ID to grant
+Access duration (e.g. 24 hours)
+Bot permissions required: Manage Roles (bot's role must sit above the temp role in the role hierarchy).
+
+Deliverables:
+
+/unlock route with Discord OAuth2 login button
+/callback OAuth2 handler that grants the role
+Background expiry checker that removes the role on time
+.env file for storing secrets (bot token, client ID/secret, role ID, guild ID)
+Simple confirmation page shown after role is granted ("You now have access for 24 hours")
+Want me to also list out the exact Discord Developer Portal steps (creating the bot, getting the token, setting redirect URI) so you have that ready before handing this to the agent?
+
+Your Discord Temporary Access Bot is live. Here's what was built and what you need to do to activate it:
+What's running:
+
+/ — the unlock page, dark velvet-rope aesthetic with a "Login with Discord" button and live member count
+/success — confirmation page showing the user's username, duration, and exact expiry time
+/api/auth/discord → /api/callback — the full OAuth2 flow that grants the role and saves the grant
+Background job running every 60 seconds to remove roles from expired users
+One required step in Discord Developer Portal:
+Go to [discord.com/developers/applications](https://discord.com/developers/applications) → your app → OAuth2 → Redirects and add:
+https://<your-replit-dev-domain>/api/callback
+Your dev domain is shown in the Replit preview URL. After you deploy, add the production domain there too.
+Also confirm in Discord:
+
+Your bot has Manage Roles permission in your server
+The bot's role in the server's role hierarchy sits above the temp role you're granting (Server Settings → Roles, drag bot role above it) Lockr setup: Set your Lockr locked-link destination to your app's root URL (https://<your-domain>/). To change the access duration — update ACCESS_DURATION_HOURS in the Secrets panel (currently set to 24 hours). Acknowledging task completion Acknowledging task completion Everything is complete and running. No action needed from me — waiting for your next request.
+so how do i connect my my locker account and how do i create link in locker
+
+Show more
+
+Acknowledged knowledge gap; recommended verification with platform support
+Acknowledged knowledge gap; recommended verification with platform support
+I couldn't find public step-by-step docs for lockr.net's own dashboard specifically (their site doesn't have an indexed help center), so I don't want to guess exact button names and get it wrong. But every link locker platform (Lockr included, based on their site's description) follows the same basic pattern, so here's what to look for:
+
+1. Connect/create your account
+Go to lockr.net → sign up or log in (they support login via lockr.net/auth). No "connection" step needed beyond having an account — you're not linking it to Discord or your Replit app at all. Lockr only needs to know the destination URL, nothing about your bot.
+
+2. Create a locked link
+In your Lockr dashboard, look for something like "New Link" / "Create Locker" / "Add Content". You'll typically be asked for:
+
+Name — just for your own reference (e.g. "Discord Access")
+Destination URL — this is the important one. Paste your Replit app's root URL here:
+https://<your-replit-domain>/
+Task/monetization settings — choose whichever task type Lockr offers (survey, offer wall, etc.) and your target countries/CPM settings if it asks
+Save/Create — it'll generate a shareable Lockr link like lockr.net/xxxxx
+3. Share that Lockr link with your Discord members
+That's the link you post in your server (e.g. in a #get-access channel or via a bot message). When they click it → complete the task → get redirected to your Replit / page → log in with Discord → role granted automatically.
+
+If your dashboard's exact wording is different from what I guessed (e.g. it says "Lockers" instead of "Links," or "Monetize" instead of "Create"), just look for the option to add new content/link — that's the one you want, and the only field that matters for this integration is the destination URL field, which must point to your Replit app.
+
+If you get stuck on a specific screen, send me a screenshot and I'll tell you exactly where to click.
+
+best free discord bot hosting
+
+
+Weighed hosting platforms and evaluated free-tier limitations comprehensively
+Weighed hosting platforms and evaluated free-tier limitations comprehensively
+The user is asking about free Discord bot hosting options, which is something that changes frequently, so I should search for current recommendations to give them accurate information.
+
+
+best free discord bot hosting 2026
+10 results
+
+
+Free Discord Bot Hosting 24/7 (2026): 3 Working Methods
+space-node.net
+
+8 Best Free Discord Bot Hosting Services (Jul 2026)
+hostadvice.com
+
+fps.ms - free discord bot hosting
+fps.ms
+7 Best Hosting for Discord Bots (2026) — Free & From $2/mo
+hosting-ranked.com
+
+7 Best Free 24/7 Discord Bot Hosting in 2026 (No Credit Card Options Tested) | ClawdHost
+clawdhost.net
+
+pella - free discord bot hosting
+www.pella.app
+
+7 Best Free Discord Bot Hosting Services (Apr 2026)
+androidexperto.com
+
+7 Best Free Discord Bot Hosting Services (Apr 2026)
+www.positioniseverything.net
+
+Bot-Hosting.net | A Free Host For Discord Bots
+bot-hosting.net
+
+Discord bot hosting | 24/7 uptime, free tier, easy deploy | JustRunMy.App
+justrunmy.app
+I need to think through hosting options for a Discord bot that requires a persistent web server with OAuth callbacks and background jobs. Oracle Cloud's free tier is the strongest choice but has unpredictable signup approval, while Render's free option won't work since it hibernates after inactivity. Railway offers $5 monthly credit but isn't truly free long-term, and there are specialized bot hosting services like fps.ms and bot-hosting.net worth considering.
+
+Since the user is already on Replit, I should clarify that the free tier will sleep and won't support the always-on requirements—they'd need Replit's paid Reserved VM Deployment option to keep the server and background job running continuously. For a genuine free-forever solution, Oracle Cloud is the best bet if approval comes through, otherwise Railway's credits might stretch far enough for a small bot application.
+
+Show more
+Done
+Since your bot has a web server (for the OAuth callback) and a background job that needs to run every 60 seconds, sleeping free tiers will break it — the bot needs to stay awake to catch OAuth logins and expire roles on schedule. Here's the honest picture as of mid-2026:
+
+Best genuinely-free option: Oracle Cloud "Always Free" Tier
+
+Includes an ARM instance with 4 OCPUs and 24 GB RAM, permanently free rather than a trial, which is enough to run multiple Discord bots 24/7 indefinitely.
+Downside: account creation sometimes gets denied, and it's a real VPS, so setup is more hands-on (SSH, installing Node, PM2, etc.) — not beginner-friendly. 
+Space-Node
+Easiest to set up (small paid-ish free tier): Railway
+
+Gives $5 in free credit every month, enough for a basic bot running 24/7, with GitHub integration for auto-deploys, one-click Discord.js/discord.py templates, and built-in logs/monitoring.
+For your small OAuth+bot app this $5 will likely cover the whole month. Simplest path if you want "push code, it's live."
+Purpose-built free Discord bot hosts (no VPS knowledge needed): bot-hosting.net and fps.ms are designed specifically for this — free 24/7 hosting for Python or Node.js bots, no credit card, though fps.ms's free tier gives only 25% CPU / 128MB RAM and needs a manual renewal every 24 hours to stay online, and is personal-use only.
+
+What I'd actually do in your position: since your bot also serves a web page (OAuth flow), go with Railway — it's the least fiddly, supports a persistent web process + background job out of the box, and $5/month free credit is normally plenty for a small project like this. If it later needs to scale past that, Oracle's free tier is the upgrade path with zero ongoing cost.
+
+Want me to write the Railway deployment steps (from your current Replit code to a live Railway app) so your agent — or you — can follow them directly?
+
+[i] Establishing console session…
+[✓] Console connected
+[Bot-Hosting Daemon]: Checking server disk space usage, this could take a few seconds...
+[Bot-Hosting Daemon]: Updating process configuration files...
+[Bot-Hosting Daemon]: Ensuring file permissions are set correctly, this could take a few seconds...
+[Bot-Hosting Daemon]: Pulling Docker container image, this could take a few minutes to complete...
+[Bot-Hosting Daemon]: Finished pulling Docker container image
+v24.18.0
+:/home/container$ cd /home/container && if [ -f package.json ]; then npm install --no-fund --no-audit; fi && node ${STARTUP_FILE}
+npm warn Unknown user config "auto-install-peers". This will stop working in the next major version of npm. See npm help npmrc for supported config options.
+npm warn Unknown user config "strict-peer-dependencies". This will stop working in the next major version of npm. See npm help npmrc for supported config options.
+npm notice run workspace@0.0.0 preinstall
+npm notice run sh -c 'rm -f package-lock.json yarn.lock; case "$npm_config_user_agent" in pnpm/*) ;; *) echo "Use pnpm instead" >&2; exit 1 ;; esac'
+Use pnpm instead
+npm error code 1
+npm error path /home/container
+npm error command failed
+npm error command sh -c sh -c 'rm -f package-lock.json yarn.lock; case "$npm_config_user_agent" in pnpm/*) ;; *) echo "Use pnpm instead" >&2; exit 1 ;; esac'
+npm error A complete log of this run can be found in: /home/container/.npm/_logs/2026-07-13T10_27_44_132Z-debug-0.log
+[Bot-Hosting Daemon]: ---------- Detected server process in a crashed state! ----------
+[Bot-Hosting Daemon]: Exit code: 1
+[Bot-Hosting Daemon]: Out of memory: false
+[Bot-Hosting Daemon]: Checking server disk space usage, this could take a few seconds...
+[Bot-Hosting Daemon]: Updating process configuration files...
+[Bot-Hosting Daemon]: Ensuring file permissions are set correctly, this could take a few seconds...
+[Bot-Hosting Daemon]: Pulling Docker container image, this could take a few minutes to complete...
+[Bot-Hosting Daemon]: Finished pulling Docker container image
+v24.18.0
+:/home/container$ cd /home/container && if [ -f package.json ]; then npm install --no-fund --no-audit; fi && node ${STARTUP_FILE}
+npm warn Unknown user config "auto-install-peers". This will stop working in the next major version of npm. See npm help npmrc for supported config options.
+npm warn Unknown user config "strict-peer-dependencies". This will stop working in the next major version of npm. See npm help npmrc for supported config options.
+npm notice run workspace@0.0.0 preinstall
+npm notice run sh -c 'rm -f package-lock.json yarn.lock; case "$npm_config_user_agent" in pnpm/*) ;; *) echo "Use pnpm instead" >&2; exit 1 ;; esac'
+Use pnpm instead
+npm error code 1
+npm error path /home/container
+npm error command failed
+npm error command sh -c sh -c 'rm -f package-lock.json yarn.lock; case "$npm_config_user_agent" in pnpm/*) ;; *) echo "Use pnpm instead" >&2; exit 1 ;; esac'
+npm error A complete log of this run can be found in: /home/container/.npm/_logs/2026-07-13T10_27_49_611Z-debug-0.log
+[Bot-Hosting Daemon]: ---------- Detected server process in a crashed state! ----------
+[Bot-Hosting Daemon]: Exit code: 1
+[Bot-Hosting Daemon]: Out of memory: false
+[Bot-Hosting Daemon]: Aborting automatic restart, last crash occurred less than 600 seconds ago.
+
+Show more
+
+Identified and resolved conflicting package manager configuration issue
+Identified and resolved conflicting package manager configuration issue
+This isn't a hosting problem — it's leftover Replit tooling. Your package.json has a preinstall script from Replit's workspace setup that forces the use of pnpm and blocks plain npm install. Bot-Hosting.net uses npm, so it fails immediately.
+
+Fix: remove the preinstall script from package.json.
+
+Open the file manager on Bot-Hosting.net (or SFTP in) and open package.json.
+Find a section that looks like this near the top:
+json
+"scripts": {
+  "preinstall": "rm -f package-lock.json yarn.lock; case \"$npm_config_user_agent\" in pnpm/*) ;; *) echo \"Use pnpm instead\" >&2; exit 1 ;; esac",
+  ...other scripts...
+}
+Delete that entire "preinstall": "..." line (keep the other scripts like "start" intact — just remove the preinstall one).
+Save the file.
+Also delete pnpm-lock.yaml if it exists in the file list (it's not needed for npm).
+Restart the server in the console.
+That preinstall script was Replit auto-generating a workspace-style project (with workspace@0.0.0 as the root package) — it's meant to enforce pnpm inside Replit's own environment, but it has no purpose once you're hosting elsewhere, so it's safe to delete.
+
+If you don't see that exact line, tell me — paste the top ~15 lines of your package.json and I'll point you to the exact spot to remove.
+
+tell this to relpit
+
+Here's what to paste to your Replit agent:
+
+Issue: Deployment on Bot-Hosting.net fails during npm install with this error:
+
+npm notice run sh -c 'rm -f package-lock.json yarn.lock; case "$npm_config_user_agent" in pnpm/*) ;; *) echo "Use pnpm instead" >&2; exit 1 ;; esac'
+Use pnpm instead
+npm error code 1
+Cause: package.json has a preinstall script that forces pnpm and blocks plain npm install. This was auto-added for the Replit workspace environment, but the external host (Bot-Hosting.net) uses npm, so every deploy crash-loops immediately.
+
+Fix needed:
+
+Remove the "preinstall" script entry from the scripts section of package.json (the one that runs rm -f package-lock.json yarn.lock; case "$npm_config_user_agent" in pnpm/*...).
+Delete pnpm-lock.yaml from the project if it exists.
+Make sure a proper package-lock.json exists (regenerate it via npm install locally in the Replit shell) so external hosts using npm install cleanly.
+Confirm package.json still has a valid "start" script pointing to the correct entry file, since that's what ${STARTUP_FILE} on Bot-Hosting.net will run.
+Push/export the updated project so it's ready to redeploy on Bot-Hosting.net.
