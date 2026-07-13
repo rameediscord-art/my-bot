@@ -1,0 +1,42 @@
+[Bot-Hosting Daemon]: Updating process configuration files...
+[Bot-Hosting Daemon]: Ensuring file permissions are set correctly, this could take a few seconds...
+[Bot-Hosting Daemon]: Pulling Docker container image, this could take a few minutes to complete...
+[Bot-Hosting Daemon]: Finished pulling Docker container image
+v24.18.0
+:/home/container$ cd /home/container && if [ -f package.json ]; then npm install --no-fund --no-audit; fi && node ${STARTUP_FILE}
+npm warn Unknown user config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown user config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm notice run workspace@0.0.0 preinstall
+npm notice run sh -c 'rm -f package-lock.json yarn.lock; case "$npm_config_user_agent" in pnpm/*) ;; *) echo "Use pnpm instead" >&2; exit 1 ;; esac'
+Use pnpm instead
+npm error code 1
+npm error path /home/container
+npm error command failed
+npm error command sh -c sh -c 'rm -f package-lock.json yarn.lock; case "$npm_config_user_agent" in pnpm/*) ;; *) echo "Use pnpm instead" >&2; exit 1 ;; esac'
+npm error A complete log of this run can be found in: /home/container/.npm/_logs/2026-07-13T13_01_18_367Z-debug-0.log
+
+[Bot-Hosting Daemon]: ---------- Detected server process in a crashed state! ----------
+[Bot-Hosting Daemon]: Exit code: 1
+[Bot-Hosting Daemon]: Out of memory: false
+[Bot-Hosting Daemon]: Checking server disk space usage, this could take a few seconds...
+[Bot-Hosting Daemon]: Updating process configuration files...
+[Bot-Hosting Daemon]: Ensuring file permissions are set correctly, this could take a few seconds...
+[Bot-Hosting Daemon]: Pulling Docker container image, this could take a few minutes to complete...
+[Bot-Hosting Daemon]: Finished pulling Docker container image
+v24.18.0
+:/home/container$ cd /home/container && if [ -f package.json ]; then npm install --no-fund --no-audit; fi && node ${STARTUP_FILE}
+npm warn Unknown user config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown user config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm notice run workspace@0.0.0 preinstall
+npm notice run sh -c 'rm -f package-lock.json yarn.lock; case "$npm_config_user_agent" in pnpm/*) ;; *) echo "Use pnpm instead" >&2; exit 1 ;; esac'
+Use pnpm instead
+npm error code 1
+npm error path /home/container
+npm error command failed
+npm error command sh -c sh -c 'rm -f package-lock.json yarn.lock; case "$npm_config_user_agent" in pnpm/*) ;; *) echo "Use pnpm instead" >&2; exit 1 ;; esac'
+npm error A complete log of this run can be found in: /home/container/.npm/_logs/2026-07-13T13_01_23_653Z-debug-0.log
+
+[Bot-Hosting Daemon]: ---------- Detected server process in a crashed state! ----------
+[Bot-Hosting Daemon]: Exit code: 1
+[Bot-Hosting Daemon]: Out of memory: false
+[Bot-Hosting Daemon]: Aborting automatic restart, last crash occurred less than 600 seconds ago.
