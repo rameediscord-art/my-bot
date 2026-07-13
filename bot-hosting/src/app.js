@@ -4,10 +4,8 @@ import session from "express-session";
 import healthRouter from "./routes/health.js";
 import discordRouter from "./routes/discord.js";
 import { startExpiryJob } from "./lib/expiryJob.js";
-import { logger } from "./lib/logger.js";
 
-const SESSION_SECRET = process.env.SESSION_SECRET;
-if (!SESSION_SECRET) throw new Error("SESSION_SECRET is required");
+const SESSION_SECRET = "some_random_secret_string";
 
 const app = express();
 

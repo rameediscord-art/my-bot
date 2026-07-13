@@ -5,12 +5,9 @@ import { logger } from "../lib/logger.js";
 
 const router = Router();
 
-const CLIENT_ID = process.env.DISCORD_CLIENT_ID;
-const CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET;
-const ACCESS_DURATION_HOURS = parseInt(process.env.ACCESS_DURATION_HOURS ?? "1", 10);
-
-if (!CLIENT_ID) throw new Error("DISCORD_CLIENT_ID is required");
-if (!CLIENT_SECRET) throw new Error("DISCORD_CLIENT_SECRET is required");
+const CLIENT_ID = "1526151913584722081";
+const CLIENT_SECRET = "tBdJHHTuzkvuRg2_gOu7aL2lHYQSjBxD";
+const ACCESS_DURATION_HOURS = 1;
 
 function getRedirectUri(req) {
   const proto =
@@ -58,7 +55,6 @@ router.get("/callback", async (req, res) => {
   const redirectUri = getRedirectUri(req);
 
   try {
-    // Exchange code for token
     const tokenRes = await fetch("https://discord.com/api/oauth2/token", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -79,7 +75,6 @@ router.get("/callback", async (req, res) => {
 
     const tokenData = await tokenRes.json();
 
-    // Fetch user info
     const userRes = await fetch("https://discord.com/api/users/@me", {
       headers: { Authorization: `Bearer ${tokenData.access_token}` },
     });
@@ -93,9 +88,7 @@ router.get("/callback", async (req, res) => {
     const discordId = user.id;
     const discordUsername = user.global_name ?? user.username;
 
-    // Check for existing active grant
     const existing = getActiveGrant(discordId);
-
     let expiresAt;
 
     if (existing) {
