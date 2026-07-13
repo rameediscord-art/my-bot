@@ -110,9 +110,15 @@ router.get("/callback", async (req, res) => {
     let expiresAt: Date;
 
     if (existing.length > 0) {
-      // Already has active grant — just redirect with current expiry
+      // Already has active grant — re-apply role (idempotent) in case it was lost
       expiresAt = existing[0].expiresAt;
-      logger.info({ discordId }, "User already has active grant, returning existing expiry");
+      logger.info({ discordId }, "User already has active grant, re-applying role and returning existing expiry");
+      try {
+        await addRole(discordId);
+      } catch (roleErr) {
+        logger.error({ roleErr, discordId }, "Failed to re-apply role — user may not be in server");
+        return res.redirect(`/?error=role_grant_failed&username=${encodeURIComponent(discordUsername)}`);
+      }
     } else {
       // Grant new access
       expiresAt = new Date(now.getTime() + ACCESS_DURATION_HOURS * 60 * 60 * 1000);
