@@ -22,5 +22,5 @@ timeoutMs = 20000
 [userenv]
 
 [userenv.shared]
-ACCESS_DURATION_HOURS = "24"
+ACCESS_DURATION_HOURS = "1"
 NODE_ENV = "development"
