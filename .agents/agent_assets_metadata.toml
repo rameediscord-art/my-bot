@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "SzNAXVNNzAgVfYu-02cmx"
+uri = "file://bot-hosting.zip"
+type = "unspecified"
+title = "bot-hosting.zip — upload this to Bot-Hosting.net"
