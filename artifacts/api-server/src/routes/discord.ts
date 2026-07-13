@@ -11,15 +11,18 @@ const CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET!;
 const GUILD_ID = process.env.DISCORD_GUILD_ID!;
 const ACCESS_DURATION_HOURS = parseInt(process.env.ACCESS_DURATION_HOURS ?? "24", 10);
 
-// Build redirect URI dynamically from the incoming request
+// Build redirect URI dynamically from the incoming request headers.
+// Always use x-forwarded-host so it works on both dev and production domains.
 function getRedirectUri(req: any): string {
-  const domain = process.env.REPLIT_DEV_DOMAIN;
-  if (domain) {
-    return `https://${domain}/api/callback`;
-  }
-  const protocol = req.headers["x-forwarded-proto"] ?? req.protocol ?? "https";
-  const host = req.headers["x-forwarded-host"] ?? req.headers.host;
-  return `${protocol}://${host}/api/callback`;
+  const proto =
+    (req.headers["x-forwarded-proto"] as string | undefined)?.split(",")[0]?.trim() ??
+    req.protocol ??
+    "https";
+  const host =
+    (req.headers["x-forwarded-host"] as string | undefined) ??
+    (req.headers.host as string | undefined) ??
+    process.env.REPLIT_DEV_DOMAIN;
+  return `${proto}://${host}/api/callback`;
 }
 
 // GET /api/auth/discord — initiates OAuth flow
@@ -28,6 +31,7 @@ router.get("/auth/discord", (req, res) => {
   (req.session as any).oauthState = state;
 
   const redirectUri = getRedirectUri(req);
+  logger.info({ redirectUri }, "Starting Discord OAuth — redirect_uri");
   const params = new URLSearchParams({
     client_id: CLIENT_ID,
     redirect_uri: redirectUri,
