@@ -3,13 +3,15 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Discord Temporary Access Bot API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: discord
+    description: Discord unlock operations
 paths:
   /healthz:
     get:
@@ -24,6 +26,41 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /discord/status:
+    get:
+      operationId: getDiscordStatus
+      tags: [discord]
+      summary: Check if a Discord user has an active unlock grant
+      parameters:
+        - name: discord_id
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Grant status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GrantStatus"
+
+  /discord/grants:
+    get:
+      operationId: listGrants
+      tags: [discord]
+      summary: List all active grants
+      responses:
+        "200":
+          description: List of active grants
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Grant"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +71,45 @@ components:
       required:
         - status
 
+    Grant:
+      type: object
+      properties:
+        id:
+          type: integer
+        discordId:
+          type: string
+        discordUsername:
+          type: string
+        grantedAt:
+          type: string
+        expiresAt:
+          type: string
+        isExpired:
+          type: boolean
+      required:
+        - id
+        - discordId
+        - discordUsername
+        - grantedAt
+        - expiresAt
+        - isExpired
+
+    GrantStatus:
+      type: object
+      properties:
+        hasActiveGrant:
+          type: boolean
+        discordId:
+          type: ["string", "null"]
+        discordUsername:
+          type: ["string", "null"]
+        expiresAt:
+          type: ["string", "null"]
+        hoursRemaining:
+          type: ["number", "null"]
+      required:
+        - hasActiveGrant
+        - discordId
+        - discordUsername
+        - expiresAt
+        - hoursRemaining

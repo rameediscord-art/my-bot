@@ -1,0 +1,27 @@
+kind = "web"
+previewPath = "/"
+title = "Discord Unlock"
+version = "1.0.0"
+id = "artifacts/discord-unlock"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 22390
+
+[services.development]
+run = "pnpm --filter @workspace/discord-unlock run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/discord-unlock", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/discord-unlock/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "22390"
+BASE_PATH = "/"
