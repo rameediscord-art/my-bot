@@ -5,4 +5,4 @@ generated = []
 id = "SzNAXVNNzAgVfYu-02cmx"
 uri = "file://bot-hosting.zip"
 type = "unspecified"
-title = "bot-hosting.zip — upload this to Bot-Hosting.net"
+title = "bot-hosting.zip — with node_modules included"

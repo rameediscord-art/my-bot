@@ -1,35 +1,83 @@
-import { drizzle } from "drizzle-orm/node-postgres";
-import { pgTable, serial, text, timestamp, boolean } from "drizzle-orm/pg-core";
-import pg from "pg";
+import { readFileSync, writeFileSync, existsSync } from "fs";
+import { join, dirname } from "path";
+import { fileURLToPath } from "url";
 
-const { Pool } = pg;
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const DB_PATH = join(__dirname, "../../data.json");
 
-if (!process.env.DATABASE_URL) {
-  throw new Error("DATABASE_URL must be set.");
+function read() {
+  if (!existsSync(DB_PATH)) {
+    return { grants: [] };
+  }
+  return JSON.parse(readFileSync(DB_PATH, "utf8"));
 }
 
-export const discordGrantsTable = pgTable("discord_grants", {
-  id: serial("id").primaryKey(),
-  discordId: text("discord_id").notNull().unique(),
-  discordUsername: text("discord_username").notNull(),
-  grantedAt: timestamp("granted_at").defaultNow().notNull(),
-  expiresAt: timestamp("expires_at").notNull(),
-  isExpired: boolean("is_expired").default(false).notNull(),
-});
+function write(data) {
+  writeFileSync(DB_PATH, JSON.stringify(data, null, 2), "utf8");
+}
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-export const db = drizzle(pool, { schema: { discordGrantsTable } });
+let _nextId = null;
+function nextId() {
+  if (_nextId === null) {
+    const data = read();
+    _nextId = data.grants.reduce((max, g) => Math.max(max, g.id ?? 0), 0) + 1;
+  }
+  return _nextId++;
+}
 
-// Create table if it doesn't exist
-export async function initDb() {
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS discord_grants (
-      id SERIAL PRIMARY KEY,
-      discord_id TEXT NOT NULL UNIQUE,
-      discord_username TEXT NOT NULL,
-      granted_at TIMESTAMP DEFAULT NOW() NOT NULL,
-      expires_at TIMESTAMP NOT NULL,
-      is_expired BOOLEAN DEFAULT FALSE NOT NULL
-    )
-  `);
+// Get a single active (non-expired, not past expiry) grant for a user
+export function getActiveGrant(discordId) {
+  const { grants } = read();
+  const now = new Date();
+  return (
+    grants.find(
+      (g) =>
+        g.discordId === discordId &&
+        !g.isExpired &&
+        new Date(g.expiresAt) > now
+    ) ?? null
+  );
+}
+
+// Save a new grant (overwrites any old records for this user first)
+export function saveGrant(discordId, discordUsername, expiresAt) {
+  const data = read();
+  // Mark any existing records for this user as expired
+  data.grants = data.grants.map((g) =>
+    g.discordId === discordId ? { ...g, isExpired: true } : g
+  );
+  data.grants.push({
+    id: nextId(),
+    discordId,
+    discordUsername,
+    grantedAt: new Date().toISOString(),
+    expiresAt: expiresAt instanceof Date ? expiresAt.toISOString() : expiresAt,
+    isExpired: false,
+  });
+  write(data);
+}
+
+// Get all grants that have passed their expiry time but aren't marked expired yet
+export function getExpiredGrants() {
+  const { grants } = read();
+  const now = new Date();
+  return grants.filter((g) => !g.isExpired && new Date(g.expiresAt) <= now);
+}
+
+// Mark a grant as expired by discordId
+export function markExpired(discordId) {
+  const data = read();
+  data.grants = data.grants.map((g) =>
+    g.discordId === discordId ? { ...g, isExpired: true } : g
+  );
+  write(data);
+}
+
+// Get all currently active grants
+export function getActiveGrants() {
+  const { grants } = read();
+  const now = new Date();
+  return grants
+    .filter((g) => !g.isExpired && new Date(g.expiresAt) > now)
+    .sort((a, b) => new Date(a.grantedAt) - new Date(b.grantedAt));
 }

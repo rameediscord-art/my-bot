@@ -1,7 +1,6 @@
 import { Router } from "express";
-import { db, discordGrantsTable } from "../db.js";
-import { eq, and, gt, lt } from "drizzle-orm";
-import { addRole, removeRole } from "../lib/discord.js";
+import { getActiveGrant, saveGrant, getActiveGrants } from "../db.js";
+import { addRole } from "../lib/discord.js";
 import { logger } from "../lib/logger.js";
 
 const router = Router();
@@ -21,7 +20,7 @@ function getRedirectUri(req) {
   const host =
     req.headers["x-forwarded-host"] ??
     req.headers.host ??
-    process.env.REPLIT_DEV_DOMAIN;
+    process.env.HOST;
   return `${proto}://${host}/api/callback`;
 }
 
@@ -95,32 +94,15 @@ router.get("/callback", async (req, res) => {
     const discordUsername = user.global_name ?? user.username;
 
     // Check for existing active grant
-    const now = new Date();
-    const existing = await db
-      .select()
-      .from(discordGrantsTable)
-      .where(
-        and(
-          eq(discordGrantsTable.discordId, discordId),
-          eq(discordGrantsTable.isExpired, false),
-          gt(discordGrantsTable.expiresAt, now)
-        )
-      )
-      .limit(1);
+    const existing = getActiveGrant(discordId);
 
     let expiresAt;
 
-    if (existing.length > 0) {
-      expiresAt = existing[0].expiresAt;
+    if (existing) {
+      expiresAt = new Date(existing.expiresAt);
       logger.info({ discordId }, "User already has active grant");
     } else {
-      expiresAt = new Date(now.getTime() + ACCESS_DURATION_HOURS * 60 * 60 * 1000);
-
-      // Mark old records expired
-      await db
-        .update(discordGrantsTable)
-        .set({ isExpired: true })
-        .where(eq(discordGrantsTable.discordId, discordId));
+      expiresAt = new Date(Date.now() + ACCESS_DURATION_HOURS * 60 * 60 * 1000);
 
       try {
         await addRole(discordId);
@@ -129,12 +111,7 @@ router.get("/callback", async (req, res) => {
         return res.redirect(`/?error=role_grant_failed&username=${encodeURIComponent(discordUsername)}`);
       }
 
-      await db.insert(discordGrantsTable).values({
-        discordId,
-        discordUsername,
-        expiresAt,
-      });
-
+      saveGrant(discordId, discordUsername, expiresAt);
       logger.info({ discordId, discordUsername, expiresAt }, "New grant created");
     }
 
@@ -151,60 +128,28 @@ router.get("/callback", async (req, res) => {
 });
 
 // GET /api/discord/status
-router.get("/discord/status", async (req, res) => {
+router.get("/discord/status", (req, res) => {
   const { discord_id } = req.query;
   if (!discord_id) return res.json({ hasActiveGrant: false });
 
-  const now = new Date();
-  const grants = await db
-    .select()
-    .from(discordGrantsTable)
-    .where(
-      and(
-        eq(discordGrantsTable.discordId, discord_id),
-        eq(discordGrantsTable.isExpired, false),
-        gt(discordGrantsTable.expiresAt, now)
-      )
-    )
-    .limit(1);
+  const grant = getActiveGrant(discord_id);
+  if (!grant) return res.json({ hasActiveGrant: false });
 
-  if (grants.length === 0) return res.json({ hasActiveGrant: false });
+  const hoursRemaining =
+    (new Date(grant.expiresAt).getTime() - Date.now()) / (1000 * 60 * 60);
 
-  const grant = grants[0];
-  const hoursRemaining = (grant.expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60);
   res.json({
     hasActiveGrant: true,
     discordId: grant.discordId,
     discordUsername: grant.discordUsername,
-    expiresAt: grant.expiresAt.toISOString(),
+    expiresAt: grant.expiresAt,
     hoursRemaining: Math.round(hoursRemaining * 10) / 10,
   });
 });
 
 // GET /api/discord/grants
-router.get("/discord/grants", async (_req, res) => {
-  const now = new Date();
-  const grants = await db
-    .select()
-    .from(discordGrantsTable)
-    .where(
-      and(
-        eq(discordGrantsTable.isExpired, false),
-        gt(discordGrantsTable.expiresAt, now)
-      )
-    )
-    .orderBy(discordGrantsTable.grantedAt);
-
-  res.json(
-    grants.map((g) => ({
-      id: g.id,
-      discordId: g.discordId,
-      discordUsername: g.discordUsername,
-      grantedAt: g.grantedAt.toISOString(),
-      expiresAt: g.expiresAt.toISOString(),
-      isExpired: g.isExpired,
-    }))
-  );
+router.get("/discord/grants", (_req, res) => {
+  res.json(getActiveGrants());
 });
 
 export default router;
