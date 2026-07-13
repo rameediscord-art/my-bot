@@ -3,8 +3,8 @@ import { Routes } from "discord-api-types/v10";
 import { logger } from "./logger.js";
 
 const BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
-const GUILD_ID = "1448709192755183678";
-const ROLE_ID = "1504021702265540679";
+const GUILD_ID = process.env.DISCORD_GUILD_ID;
+const ROLE_ID = process.env.DISCORD_ROLE_ID;
 
 const rest = new REST({ version: "10" }).setToken(BOT_TOKEN);
 
